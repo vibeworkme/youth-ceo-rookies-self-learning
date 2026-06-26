@@ -9,6 +9,32 @@ const toast = document.querySelector("#toast");
 
 const defaultPitch = "아직 작성된 내용이 없습니다. Step 1부터 입력해보세요.";
 
+const sampleState = {
+  nickname: "민지",
+  interests: "자취 요리, 생활비 절약, 건강한 식사",
+  knownProblem: "장을 보면 재료가 남고, 결국 버리게 되는 문제",
+  personality: "꼼꼼함, 현실적, 실험을 좋아함",
+  helpPeople: "자취를 처음 시작한 청년",
+  characterLine: "작은 냉장고 안에서 낭비를 줄이는 자취 식생활 메이커",
+  whyUncomfortable: "장을 본 뒤 1인분만 쓰고 남은 재료를 어떻게 처리할지 몰라 불편했다.",
+  whyCost: "재료를 버리고 다시 배달앱을 쓰면서 식비가 계속 늘었다.",
+  whyChoice: "레시피는 많은데 내 냉장고 재료에 맞는 선택지가 잘 보이지 않았다.",
+  interestArea: "자취 식생활",
+  moneyMoment: "장보기 후 남은 재료를 버리고 다시 배달을 시킬 때",
+  failMoment: "대파, 양파, 채소를 사놓고 절반 이상 버린 경험",
+  choiceProblem: "남은 재료로 무엇을 만들 수 있는지 바로 판단하기 어렵다.",
+  problemSentence: "자취 초기 청년은 1인분 기준 식재료 관리가 어려워 재료와 식비를 반복적으로 낭비한다.",
+  lensMemo: "- 돈 낭비: 먹지 못하고 버리는 식재료가 생긴다.\n- 선택 스트레스: 남은 재료로 만들 메뉴를 고르기 어렵다.",
+  ideaList:
+    "1. 남은 재료 입력 기반 1인분 레시피 추천\n2. 일주일 식재료 소진표\n3. 자취생 냉장고 재고 체크리스트\n4. 3일 안에 먹어야 할 재료 알림\n5. 편의점 재료 조합 추천 콘텐츠\n6. 식비 낭비 기록표\n7. 자취생 장보기 소분 키트\n8. 남은 재료 교환 커뮤니티\n9. 초보 자취생 식단 템플릿\n10. 냉장고 사진 기반 메뉴 추천",
+  scoreFrequency: "5",
+  scoreReach: "4",
+  scorePain: "4",
+  scoreTest: "5",
+  finalIdea: "남은 식재료를 입력하면 1인분 메뉴와 소진 순서를 알려주는 자취생 냉장고 코치",
+  firstExperiment: "자취생 5명에게 남은 재료 3가지를 받아 1인분 메뉴 추천표를 보내고, 실제로 도움이 됐는지 물어본다.",
+};
+
 function loadState() {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
@@ -176,6 +202,18 @@ document.addEventListener("click", (event) => {
     });
     persist();
     showToast("작성 내용을 초기화했습니다.");
+  }
+
+  if (action === "fill-sample") {
+    fields.forEach((field) => {
+      field.value = sampleState[field.dataset.field] || "";
+    });
+    checks.forEach((check) => {
+      check.checked = true;
+    });
+    persist();
+    document.querySelector("#pitch")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    showToast("예시 답변을 채웠습니다.");
   }
 
   if (action === "copy-final") {
