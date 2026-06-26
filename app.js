@@ -145,6 +145,43 @@ function copyText(text) {
   );
 }
 
+function getFieldLabel(field) {
+  const label = field.closest("label");
+  if (!label) return field.dataset.field;
+
+  const text = Array.from(label.childNodes)
+    .filter((node) => node.nodeType === Node.TEXT_NODE)
+    .map((node) => node.textContent.trim())
+    .join(" ")
+    .trim();
+
+  return text || field.dataset.field;
+}
+
+function isBeforeField(field, target) {
+  return Boolean(field.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
+function buildCopyPrompt(button) {
+  const basePrompt = button.dataset.copy.trim();
+  const contextLines = fields
+    .filter((field) => isBeforeField(field, button))
+    .map((field) => ({ label: getFieldLabel(field), value: field.value.trim() }))
+    .filter((item) => item.value.length > 0)
+    .map((item) => `- ${item.label}: ${item.value}`);
+
+  if (!contextLines.length) return basePrompt;
+
+  return [
+    basePrompt,
+    "",
+    "[내가 입력한 정보]",
+    ...contextLines,
+    "",
+    "위 입력 내용을 반드시 반영해서 답변해줘.",
+  ].join("\n");
+}
+
 function downloadPitch() {
   const blob = new Blob([finalOutput.textContent], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -164,7 +201,7 @@ checks.forEach((check) => check.addEventListener("change", persist));
 document.addEventListener("click", (event) => {
   const copyButton = event.target.closest("[data-copy]");
   if (copyButton) {
-    copyText(copyButton.dataset.copy);
+    copyText(buildCopyPrompt(copyButton));
     return;
   }
 
