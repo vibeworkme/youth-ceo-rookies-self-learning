@@ -9,6 +9,53 @@ const toast = document.querySelector("#toast");
 
 const defaultPitch = "아직 작성된 내용이 없습니다. Step 1부터 입력해보세요.";
 
+const FIELD_LABELS = {
+  nickname: "이름 또는 닉네임",
+  interests: "관심사 3가지",
+  knownProblem: "내가 잘 아는 문제",
+  personality: "내 성격/분위기",
+  helpPeople: "돕고 싶은 사람",
+  characterLine: "캐릭터 한 줄 소개 초안",
+  whyUncomfortable: "불편했던 장면",
+  whyCost: "돈/시간/에너지가 쓰인 장면",
+  whyChoice: "선택이 어려웠던 장면",
+  interestArea: "관심 영역",
+  moneyMoment: "자주 돈 쓰는 순간",
+  failMoment: "실패하거나 후회한 경험",
+  choiceProblem: "선택이 어려운 지점",
+  problemSentence: "최종 문제 문장",
+  lensMemo: "문제 렌즈 메모",
+  ideaList: "현재 아이디어 후보",
+};
+
+const COPY_CONTEXTS = {
+  character: {
+    title: "내 브랜드 캐릭터 재료",
+    fields: ["nickname", "interests", "knownProblem", "personality", "helpPeople", "characterLine"],
+    instruction: "비어 있는 항목은 추정하지 말고, 입력된 정보만 바탕으로 만들어줘.",
+  },
+  problem: {
+    title: "문제 탐색 재료",
+    fields: [
+      "interests",
+      "knownProblem",
+      "whyUncomfortable",
+      "whyCost",
+      "whyChoice",
+      "interestArea",
+      "moneyMoment",
+      "failMoment",
+      "choiceProblem",
+    ],
+    instruction: "문제 후보는 반드시 '누가 / 언제 / 무엇 때문에 불편한가'가 보이게 써줘.",
+  },
+  idea: {
+    title: "아이디어 확장 재료",
+    fields: ["interestArea", "problemSentence", "lensMemo", "ideaList"],
+    instruction: "최종 문제 문장을 중심으로 아이디어를 만들고, 이미 적은 후보가 있으면 중복을 피해서 확장해줘.",
+  },
+};
+
 const sampleState = {
   nickname: "민지",
   interests: "자취 요리, 생활비 절약, 건강한 식사",
@@ -76,7 +123,7 @@ function buildPitch() {
 
   return [
     `안녕하세요. 저는 ${nickname}입니다.`,
-    characterLine ? `저는 ${characterLine}라는 방향으로 아이디어를 정리했습니다.` : "",
+    characterLine ? `저를 설명하는 한 줄은 "${characterLine}"입니다.` : "",
     interestArea ? `제가 관심 있게 본 영역은 ${interestArea}입니다.` : "",
     problemSentence ? `제가 주목한 문제는 "${problemSentence}"입니다.` : "",
     helpPeople ? `이 문제는 특히 ${helpPeople}에게 의미가 있다고 봤습니다.` : "",
@@ -145,28 +192,12 @@ function copyText(text) {
   );
 }
 
-function getFieldLabel(field) {
-  const label = field.closest("label");
-  if (!label) return field.dataset.field;
-
-  const text = Array.from(label.childNodes)
-    .filter((node) => node.nodeType === Node.TEXT_NODE)
-    .map((node) => node.textContent.trim())
-    .join(" ")
-    .trim();
-
-  return text || field.dataset.field;
-}
-
-function isBeforeField(field, target) {
-  return Boolean(field.compareDocumentPosition(target) & Node.DOCUMENT_POSITION_FOLLOWING);
-}
-
 function buildCopyPrompt(button) {
   const basePrompt = button.dataset.copy.trim();
-  const contextLines = fields
-    .filter((field) => isBeforeField(field, button))
-    .map((field) => ({ label: getFieldLabel(field), value: field.value.trim() }))
+  const context = COPY_CONTEXTS[button.dataset.copyContext] || null;
+  const contextFields = context ? context.fields : [];
+  const contextLines = contextFields
+    .map((name) => ({ label: FIELD_LABELS[name] || name, value: getValue(name) }))
     .filter((item) => item.value.length > 0)
     .map((item) => `- ${item.label}: ${item.value}`);
 
@@ -175,10 +206,10 @@ function buildCopyPrompt(button) {
   return [
     basePrompt,
     "",
-    "[내가 입력한 정보]",
+    `[${context.title}]`,
     ...contextLines,
     "",
-    "위 입력 내용을 반드시 반영해서 답변해줘.",
+    context.instruction,
   ].join("\n");
 }
 
